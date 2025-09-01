@@ -6,10 +6,16 @@
   "scripts": {
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:seed": "tsx seed/seed.ts",
+    "db:migrate:create": "prisma migrate dev --name",
+    "db:migrate:reset": "prisma migrate reset --force",
+    "db:seed": "tsx seed/seed_T0.003.ts",
     "db:studio": "prisma studio",
+    "db:push": "prisma db push",
     "build": "prisma generate",
-    "clean": "rimraf node_modules .turbo dist"
+    "clean": "rimraf node_modules .turbo dist generated"
+  },
+  "prisma": {
+    "seed": "tsx seed/seed_T0.003.ts"
   },
   "keywords": [],
   "author": "BR SISTEMAS",
@@ -17,7 +23,9 @@
   "packageManager": "pnpm@10.14.0",
   "devDependencies": {
     "@prisma/client": "^6.15.0",
+    "@types/bcrypt": "^6.0.0",
     "@types/node": "^24.3.0",
+    "bcrypt": "^6.0.0",
     "prisma": "^6.15.0",
     "rimraf": "^6.0.1",
     "tsx": "^4.20.5"

@@ -29,7 +29,7 @@ Use os **emojis de status**:
 ### 🛠 Sprint 0 – Arquitetura & Setup
 - ✅ **T0.001** Criar monorepo base (Next.js + NestJS + Prisma).
 - ✅ **T0.002** Configurar Docker Compose (MariaDB, Redis, Backend, Frontend, NGINX).
-- ⬜ **T0.003** Criar schema inicial no Prisma + Seed.
+- ✅ **T0.003** Criar schema inicial no Prisma + Seed.
 - ⬜ **T0.004** Configurar CI/CD (lint, test, build).
 
 🎯 **Objetivo:** Ambiente rodando localmente com `docker compose up`, CI funcionando e seed criado.  
@@ -209,3 +209,36 @@ Infraestrutura Docker completa configurada com todos os serviços necessários:
 - ✅ Scripts npm para gerenciamento Docker
 
 **Próxima tarefa:** T0.003 - Criar schema inicial no Prisma + Seed
+
+---
+
+### [S0][T0.003] - Schema Prisma inicial e seed ✅
+**Data:** 2025-09-01  
+**Branch:** `sprint/S0_task_T0.003-prisma-seed`  
+
+**Resumo:**  
+Schema completo do banco de dados criado com suporte para multi-tenancy, RBAC e LGPD:
+- **5 tabelas principais:** companies, users, invites, sessions, audit_logs
+- **Relações configuradas:** FK, índices e constraints
+- **LGPD compliance:** Soft delete, audit trail, campos encriptados
+- **Seed com dados de teste:** 2 empresas, 7 usuários, 3 convites
+
+**Arquivos principais criados:**
+- `database/prisma/schema_T0.003.prisma` - Schema completo do banco
+- `database/seed/seed_T0.003.ts` - Script de seed com dados iniciais
+- `tasks/T0.003/schema-docs.md` - Documentação detalhada do schema
+
+**Dados de teste criados:**
+- ✅ Empresa BR SISTEMAS com Master Admin
+- ✅ Empresa TechCorp com 6 usuários (admin, operadores, clientes)
+- ✅ 3 convites de teste (2 ativos, 1 expirado)
+- ✅ Logs de auditoria iniciais
+- ✅ Senhas hasheadas com bcrypt
+
+**Credenciais de teste:**
+- Master: admin@brsistemas.com.br / Master@Admin2025
+- Admin: admin@techcorp.com.br / Sysdesk@2025
+- Operador: maria.santos@techcorp.com.br / Sysdesk@2025
+- Cliente: ana.costa@cliente.com.br / Sysdesk@2025
+
+**Próxima tarefa:** T0.004 - Configurar CI/CD
