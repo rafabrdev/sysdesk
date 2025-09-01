@@ -13,7 +13,14 @@
     "format": "pnpm --filter '*' format",
     "test": "pnpm --filter '*' test",
     "clean": "pnpm --filter '*' clean",
-    "install:all": "pnpm install --recursive"
+    "install:all": "pnpm install --recursive",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "docker:ps": "docker compose ps",
+    "docker:clean": "docker compose down -v --remove-orphans",
+    "docker:rebuild": "docker compose down && docker compose build --no-cache && docker compose up -d"
   },
   "keywords": [
     "chat",

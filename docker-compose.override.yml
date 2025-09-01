@@ -1,0 +1,50 @@
+# docker-compose.override.yml
+# Development overrides for Docker Compose
+# Task T0.002 - BR SISTEMAS Sysdesk
+
+version: '3.9'
+
+services:
+  # Backend development overrides
+  backend:
+    build:
+      target: development
+    command: pnpm run start:dev
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    environment:
+      NODE_ENV: development
+
+  # Frontend development overrides  
+  frontend:
+    build:
+      target: development
+    command: pnpm dev
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      NODE_ENV: development
+      WATCHPACK_POLLING: true
+
+  # Database development extras
+  db:
+    ports:
+      - "3306:3306"
+
+  # Redis development extras
+  redis:
+    ports:
+      - "6379:6379"
+
+  # Optional: Mailhog for email testing
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: sysdesk-mailhog
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # Web UI
+    networks:
+      - sysdesk-network
