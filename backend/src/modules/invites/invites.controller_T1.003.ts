@@ -16,12 +16,11 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { InvitesService } from './invites.service_T1.003';
-import { CreateInviteDto, InviteResponseDto, ValidateInviteDto } from './dto/create-invite.dto_T1.003';
+import { CreateInviteDto, InviteResponseDto } from './dto/create-invite.dto_T1.003';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard_T1.002';
 import { RolesGuard } from '../../common/guards/roles.guard_T1.003';
-import { Roles, AdminOnly } from '../../common/decorators/roles.decorator_T1.003';
+import { AdminOnly } from '../../common/decorators/roles.decorator_T1.003';
 import { Public } from '../../common/decorators/public.decorator';
-import { Role } from '../../../generated/prisma';
 
 @ApiTags('Invites')
 @Controller('api/invites')

@@ -1,7 +1,7 @@
 // users.service_T1.003.ts
 // Service for user management with invite-based registration - Sprint 1 Task T1.003
 
-import { Injectable, BadRequestException, NotFoundException, ConflictException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { InvitesService } from '../invites/invites.service_T1.003';
 import { AuthService } from '../auth/auth.service_T1.002';
@@ -45,7 +45,7 @@ export class UsersService {
         data: {
           email: invite.email,
           password: hashedPassword,
-          name: dto.name || invite.name,
+          name: dto.name || invite.name || invite.email,
           phone: dto.phone,
           role: invite.role,
           department: invite.department,
@@ -105,7 +105,7 @@ export class UsersService {
         name: result.name,
         role: result.role,
         companyId: result.companyId,
-        company: result.company,
+        company: (result as any).company,
       },
     };
   }

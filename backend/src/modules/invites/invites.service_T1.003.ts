@@ -113,7 +113,7 @@ export class InvitesService {
     return this.formatInviteResponse(invite);
   }
 
-  async findAll(companyId: string, userId: string): Promise<InviteResponseDto[]> {
+  async findAll(companyId: string, _userId?: string): Promise<InviteResponseDto[]> {
     const invites = await this.prisma.invite.findMany({
       where: { companyId },
       include: {
@@ -176,7 +176,7 @@ export class InvitesService {
     } catch (error) {
       return { 
         valid: false, 
-        error: error.message || 'Token inválido' 
+        error: error instanceof Error ? error.message : 'Token inválido' 
       };
     }
   }
