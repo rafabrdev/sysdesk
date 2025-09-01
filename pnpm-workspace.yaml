@@ -1,0 +1,19 @@
+# pnpm-workspace.yaml_T0.001
+# Configuração do monorepo Sysdesk para Sprint 0 Task T0.001
+# Gerencia os workspaces do projeto
+
+packages:
+  # Frontend - Next.js application
+  - 'frontend'
+  
+  # Backend - NestJS application
+  - 'backend'
+  
+  # Database - Prisma schemas and migrations
+  - 'database'
+  
+  # Shared utilities and types (futuro)
+  # - 'packages/*'
+  
+  # Test utilities and E2E tests
+  # - 'ops/tests/*'

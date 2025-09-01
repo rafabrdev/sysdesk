@@ -1,0 +1,25 @@
+{
+  "name": "@sysdesk/database",
+  "version": "1.0.0",
+  "description": "Database schemas and migrations for Sysdesk",
+  "private": true,
+  "scripts": {
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "tsx seed/seed.ts",
+    "db:studio": "prisma studio",
+    "build": "prisma generate",
+    "clean": "rimraf node_modules .turbo dist"
+  },
+  "keywords": [],
+  "author": "BR SISTEMAS",
+  "license": "PROPRIETARY",
+  "packageManager": "pnpm@10.14.0",
+  "devDependencies": {
+    "@prisma/client": "^6.15.0",
+    "@types/node": "^24.3.0",
+    "prisma": "^6.15.0",
+    "rimraf": "^6.0.1",
+    "tsx": "^4.20.5"
+  }
+}

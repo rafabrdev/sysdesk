@@ -1,0 +1,30 @@
+{
+  "name": "sysdesk",
+  "version": "1.0.0",
+  "description": "On-premise multi-tenant support chat platform with real-time messaging, RBAC, exports, and LGPD compliance",
+  "private": true,
+  "author": "BR SISTEMAS",
+  "license": "PROPRIETARY",
+  "packageManager": "pnpm@10.14.0",
+  "scripts": {
+    "dev": "pnpm --parallel --filter '*' dev",
+    "build": "pnpm --filter '*' build",
+    "lint": "pnpm --filter '*' lint",
+    "format": "pnpm --filter '*' format",
+    "test": "pnpm --filter '*' test",
+    "clean": "pnpm --filter '*' clean",
+    "install:all": "pnpm install --recursive"
+  },
+  "keywords": [
+    "chat",
+    "support",
+    "real-time",
+    "on-premise",
+    "LGPD",
+    "multi-tenant"
+  ],
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}

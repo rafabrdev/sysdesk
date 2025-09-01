@@ -1,0 +1,712 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-manual name="sysdesk" company="BR SISTEMAS" version="1.0">
+  <!-- =========================================================================
+       PURPOSE
+       This XML is the single source of truth for agents and developers.
+       It defines: conventions, workflows, environments, monorepo layout,
+       security/LGPD rules, and step-by-step tasks for each sprint (S0–S9).
+       ====================================================================== -->
+
+  <metadata>
+    <project>Sysdesk</project>
+    <owner>BR SISTEMAS</owner>
+    <description>On-premise multi-tenant support chat platform with real-time messaging, RBAC, exports, and LGPD compliance.</description>
+    <languages>
+      <documentation>pt-BR</documentation>
+      <agent-instructions>en-US</agent-instructions>
+    </languages>
+  </metadata>
+
+  <!-- ============================== CONVENTIONS ============================== -->
+  <conventions>
+    <task-id format="T{SPRINT}.{SEQ}" example="T3.002"/>
+    <branch format="sprint/S{SPRINT}_task_T{SPRINT}.{SEQ}-{kebab-short-desc}" example="sprint/S3_task_T3.002-socket-gateway"/>
+    <commit format="[S{SPRINT}][T{SPRINT}.{SEQ}] - short description"/>
+    <pr-title format="PR: S{SPRINT} - T{SPRINT}.{SEQ} - short description"/>
+    <file-suffix rule="All created/changed files MUST include task id" example="chatGateway_T3.002.ts"/>
+    <code-style>
+      <typescript>true</typescript>
+      <eslint>true</eslint>
+      <prettier>true</prettier>
+      <testing backend="jest" frontend="jest+rtl" e2e="playwright"/>
+      <coverage backend-min="0.70" frontend-min="0.70"/>
+    </code-style>
+    <ui-library options="MUI|ShadcnUI" css="Tailwind global theme"/>
+  </conventions>
+
+  <!-- =============================== TOOLING ================================= -->
+  <tooling>
+    <monorepo manager="pnpm" turbo="optional"/>
+    <mcp>
+      <provider name="filesystem" purpose="read/write code and config"/>
+      <provider name="github" purpose="branch/commit/push/PR"/>
+      <provider name="context7" purpose="check latest best practices for NestJS/Next.js/Prisma/Docker"/>
+      <provider name="playwright" purpose="run E2E tests"/>
+      <provider name="manual-xml" purpose="parse this document"/>
+    </mcp>
+    <ci-cd system="github-actions">
+      <workflow id="lint-test-build" triggers="push, pull_request" gates="lint, unit, e2e, coverage, vulnerability-scan"/>
+      <workflow id="deploy-on-main" triggers="push:main" gates="all-green"/>
+    </ci-cd>
+  </tooling>
+
+  <!-- ============================== ENVIRONMENTS ============================= -->
+  <environments>
+    <env name="development" proxy="http://localhost" docker="compose">
+      <urls frontend="http://localhost" backend="http://localhost/api" websocket="ws://localhost/socket.io"/>
+    </env>
+    <env name="staging" proxy="https://staging.sysdesk.local" docker="compose"/>
+    <env name="production" proxy="https://sysdesk.local" docker="compose"/>
+    <env-files>
+      <example path=".env.example">
+        <![CDATA[
+# Shared
+NODE_ENV=development
+TZ=America/Sao_Paulo
+
+# Database (MariaDB)
+DATABASE_URL="mysql://sysdesk:sysdesk@db:3306/sysdesk"
+
+# Auth
+JWT_SECRET=change_me
+JWT_REFRESH_SECRET=change_me_too
+JWT_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
+BCRYPT_SALT_ROUNDS=12
+
+# Realtime/Queue
+REDIS_URL=redis://redis:6379
+
+# Mail/Export
+SMTP_HOST=mail.local
+SMTP_PORT=587
+SMTP_USER=sysdesk
+SMTP_PASS=change_me
+
+# LGPD
+RETENTION_DAYS=365
+AES_SECRET=change_me_32bytes
+        ]]>
+      </example>
+    </env-files>
+  </environments>
+
+  <!-- ============================== MONOREPO ================================= -->
+  <monorepo>
+    <structure>
+      <![CDATA[
+/
+├─ project-manual.xml
+├─ WARP.md
+├─ README.md
+├─ docker-compose.yml
+├─ .env.example
+├─ ops/
+│  ├─ warp.yaml
+│  ├─ github/
+│  │  └─ workflows/*.yml
+│  ├─ tests/playwright/
+│  └─ mcp-server/
+├─ frontend/ (Next.js + TS)
+│  └─ src/{pages,app,components,hooks,styles,lib}
+├─ backend/ (NestJS + TS)
+│  └─ src/modules/{auth,users,chats,tickets,metrics,exports,audit}
+├─ database/
+│  ├─ schema.prisma
+│  ├─ migrations/
+│  └─ seed/
+└─ tasks/
+   └─ T{S}.{NNN}/
+      ├─ NOTES.md
+      └─ EVIDENCE.md
+      ]]>
+    </structure>
+  </monorepo>
+
+  <!-- ============================== SECURITY/LGPD ============================ -->
+  <security>
+    <auth method="JWT+Refresh" hash="bcrypt" min-rounds="12"/>
+    <encryption symmetric="AES-256-GCM" secret-var="AES_SECRET"/>
+    <headers>
+      <nginx-hardening>true</nginx-hardening>
+      <hsts>true</hsts>
+      <content-security-policy>strict</content-security-policy>
+    </headers>
+    <api>
+      <validation class-validator="true" whitelist="true" transform="true"/>
+      <rate-limiting enabled="true" lib="NestJS Throttler"/>
+      <rbac roles="MASTER_ADMIN,ADMIN,OPERADOR,CLIENTE"/>
+    </api>
+    <dependency-scan tools="npm audit|Snyk|OWASP Dependency-Check"/>
+  </security>
+
+  <lgpd>
+    <principles minimal-collection="true" purpose-limitation="true" transparency="true"/>
+    <audit-logs table="audit_logs" immutable="append-only" record="login,export,delete,permission-change"/>
+    <data-subject-rights export="pdf,csv" forget="anonymize/delete" consent="timestamped"/>
+    <retention days="${RETENTION_DAYS}"/>
+    <pii encrypted="AES" examples="CPF,CNPJ,phone,address"/>
+  </lgpd>
+
+  <!-- ================================ WORKFLOWS ============================== -->
+  <workflows>
+    <workflow id="standard-task">
+      <steps>
+        <step order="1">Parse project-manual.xml and WARP.md to locate next open task.</step>
+        <step order="2">Create task folder: /tasks/T{S}.{NNN}/ with NOTES.md and EVIDENCE.md.</step>
+        <step order="3">Create branch: sprint/S{S}_task_T{S}.{NNN}-{short-desc}.</step>
+        <step order="4">Implement changes. Suffix all files with _T{S}.{NNN} before extension.</step>
+        <step order="5">Run: pnpm -w i; lint; unit tests; build; playwright e2e (where defined).</step>
+        <step order="6">Update README Sprint Log and tasks/T{S}.{NNN}/EVIDENCE.md with commands and screenshots/outputs.</step>
+        <step order="7">Commit and push using the convention. Open PR with template and link to task ID.</step>
+        <step order="8">Wait CI (lint, unit, e2e, coverage, security). Fix if fails. Merge when green.</step>
+      </steps>
+    </workflow>
+  </workflows>
+
+  <!-- ================================ SPRINTS ================================= -->
+  <sprints>
+
+    <!-- ============================== SPRINT 0 =============================== -->
+    <sprint id="S0" title="Architecture & Setup" goal="Initialize monorepo, Docker infra, base schemas and CI">
+      <deliverables>
+        <item>Monorepo skeleton with Next.js, NestJS, Prisma (MariaDB), Redis, NGINX</item>
+        <item>docker-compose.yml with services and healthchecks</item>
+        <item>.env.example complete</item>
+        <item>GitHub Actions (lint/test/build) running</item>
+      </deliverables>
+      <tasks>
+        <task id="T0.001" title="Create Monorepo Structure">
+          <prereq/>
+          <changes>
+            <file path="/" name="README.md_T0.001"/>
+            <file path="/" name="pnpm-workspace.yaml_T0.001"/>
+            <file path="/" name="turbo.json_T0.001" optional="true"/>
+            <file path="/frontend" name="Next.js app_T0.001"/>
+            <file path="/backend" name="NestJS app_T0.001"/>
+            <file path="/database" name="schema.prisma_T0.001"/>
+          </changes>
+          <commands>
+            <![CDATA[
+pnpm -w dlx create-next-app frontend --ts --eslint
+pnpm -w dlx @nestjs/cli new backend --strict
+pnpm -w add -D eslint prettier @types/node
+            ]]>
+          </commands>
+          <acceptance>
+            <criterion>Repo builds locally (frontend and backend) without errors</criterion>
+            <criterion>ESLint/Prettier configured</criterion>
+          </acceptance>
+        </task>
+
+        <task id="T0.002" title="Docker Compose + NGINX + Redis + MariaDB">
+          <prereq>T0.001</prereq>
+          <changes>
+            <file path="/" name="docker-compose.yml_T0.002"/>
+            <file path="/ops" name="nginx.conf_T0.002"/>
+          </changes>
+          <commands>
+            <![CDATA[
+docker compose up -d --build
+docker compose ps
+            ]]>
+          </commands>
+          <acceptance>
+            <criterion>All services healthy: db, redis, backend, frontend, nginx</criterion>
+            <criterion>HTTP 200 at / (frontend) and /api/health (backend)</criterion>
+          </acceptance>
+        </task>
+
+        <task id="T0.003" title="Prisma + Initial Schema + Seed">
+          <prereq>T0.002</prereq>
+          <changes>
+            <file path="/database" name="schema.prisma_T0.003"/>
+            <file path="/database/seed" name="seed.ts_T0.003"/>
+          </changes>
+          <commands>
+            <![CDATA[
+pnpm -w add -w prisma @prisma/client
+pnpm -w prisma migrate dev --name init
+node database/seed/seed_T0.003.ts
+            ]]>
+          </commands>
+          <acceptance>
+            <criterion>MariaDB contains users, companies base tables</criterion>
+            <criterion>Seed created master admin</criterion>
+          </acceptance>
+        </task>
+
+        <task id="T0.004" title="CI: Lint + Unit + Build">
+          <prereq>T0.001</prereq>
+          <changes>
+            <file path="/ops/github/workflows" name="ci.yml_T0.004"/>
+          </changes>
+          <acceptance>
+            <criterion>CI passes on pull_request</criterion>
+          </acceptance>
+        </task>
+      </tasks>
+    </sprint>
+
+    <!-- ============================== SPRINT 1 =============================== -->
+    <sprint id="S1" title="Auth & Invite" goal="JWT auth, refresh tokens, roles, invite-only registration">
+      <deliverables>
+        <item>Auth endpoints: /api/auth/login, /api/auth/register-by-invite, /api/auth/refresh</item>
+        <item>RBAC guards with roles: MASTER_ADMIN, ADMIN, OPERADOR, CLIENTE</item>
+        <item>Invite flow with token table</item>
+        <item>Frontend login/register pages</item>
+      </deliverables>
+      <tasks>
+        <task id="T1.001" title="Models: users, companies, invites, roles">
+          <prereq>S0</prereq>
+          <changes>
+            <file path="/database" name="schema.prisma_T1.001 (users, companies, invites, roles)"/>
+          </changes>
+          <commands>
+            <![CDATA[
+pnpm -w prisma migrate dev --name auth_models
+            ]]>
+          </commands>
+          <acceptance>
+            <criterion>Unique index on users.email</criterion>
+            <criterion>invites table with token, role, companyId, expiresAt</criterion>
+          </acceptance>
+        </task>
+
+        <task id="T1.002" title="Backend Auth (bcrypt/JWT/Refresh)">
+          <prereq>T1.001</prereq>
+          <changes>
+            <file path="/backend/src/modules/auth" name="auth.controller_T1.002.ts"/>
+            <file path="/backend/src/modules/auth" name="auth.service_T1.002.ts"/>
+            <file path="/backend/src/modules/auth" name="jwt.strategy_T1.002.ts"/>
+            <file path="/backend/src/modules/auth" name="refresh.strategy_T1.002.ts"/>
+          </changes>
+          <commands>
+            <![CDATA[
+pnpm -w add @nestjs/jwt @nestjs/passport passport bcrypt
+pnpm -w add -D @types/bcrypt
+            ]]>
+          </commands>
+          <acceptance>
+            <criterion>/login validates credentials and returns access+refresh</criterion>
+            <criterion>/refresh issues new access token with valid refresh</criterion>
+            <criterion>Passwords hashed with bcrypt (>=12 rounds)</criterion>
+          </acceptance>
+        </task>
+
+        <task id="T1.003" title="Invite-only Registration + RBAC Guards">
+          <prereq>T1.002</prereq>
+          <changes>
+            <file path="/backend/src/modules/users" name="users.controller_T1.003.ts"/>
+            <file path="/backend/src/guards" name="roles.guard_T1.003.ts"/>
+            <file path="/backend/src/decorators" name="roles.decorator_T1.003.ts"/>
+          </changes>
+          <acceptance>
+            <criterion>Only valid invite token allows registration</criterion>
+            <criterion>Routes protected by @Roles</criterion>
+          </acceptance>
+        </task>
+
+        <task id="T1.004" title="Frontend Login/Register">
+          <prereq>T1.003</prereq>
+          <changes>
+            <file path="/frontend/src/pages" name="login_T1.004.tsx"/>
+            <file path="/frontend/src/pages" name="register_T1.004.tsx"/>
+            <file path="/frontend/src/hooks" name="useAuth_T1.004.ts"/>
+          </changes>
+          <acceptance>
+            <criterion>User can register via invite link and login</criterion>
+            <criterion>JWT stored (HttpOnly cookie preferred) and used in subsequent requests</criterion>
+          </acceptance>
+        </task>
+
+        <task id="T1.005" title="Tests: unit+E2E auth">
+          <prereq>T1.004</prereq>
+          <acceptance>
+            <criterion>Unit tests for AuthService and UsersService pass with >=70% coverage</criterion>
+            <criterion>Playwright E2E: register (invite), login, visit private page</criterion>
+          </acceptance>
+        </task>
+      </tasks>
+    </sprint>
+
+    <!-- ============================== SPRINT 2 =============================== -->
+    <sprint id="S2" title="UI Base & Theming" goal="Global theme, layout, navigation and protected routes">
+      <deliverables>
+        <item>Global Tailwind/MUI theme</item>
+        <item>Layout with Navbar/Sidebar/Footer</item>
+        <item>Auth guard on routes</item>
+        <item>RTL/Jest tests for key components</item>
+      </deliverables>
+      <tasks>
+        <task id="T2.001" title="Global Theme & Styles">
+          <changes>
+            <file path="/frontend/src/styles" name="globals_T2.001.css"/>
+            <file path="/frontend/src" name="theme_T2.001.ts (MUI or shadcn config)"/>
+          </changes>
+          <acceptance>
+            <criterion>Light/Dark toggle works</criterion>
+            <criterion>Brand colors applied</criterion>
+          </acceptance>
+        </task>
+
+        <task id="T2.002" title="Layout & Navigation">
+          <changes>
+            <file path="/frontend/src/components" name="Layout_T2.002.tsx"/>
+            <file path="/frontend/src/components" name="Navbar_T2.002.tsx"/>
+            <file path="/frontend/src/components" name="Sidebar_T2.002.tsx"/>
+          </changes>
+          <acceptance>
+            <criterion>Responsive navigation (desktop/mobile)</criterion>
+          </acceptance>
+        </task>
+
+        <task id="T2.003" title="Auth Context & Protected Routes">
+          <changes>
+            <file path="/frontend/src/hooks" name="useAuth_T2.003.ts"/>
+            <file path="/frontend/src/middleware" name="auth_T2.003.ts"/>
+          </changes>
+          <acceptance>
+            <criterion>Unauthenticated users redirected to /login</criterion>
+          </acceptance>
+        </task>
+
+        <task id="T2.004" title="Tests UI">
+          <acceptance>
+            <criterion>RTL unit tests for Navbar/Sidebar/Layout</criterion>
+            <criterion>Playwright E2E: login -> dashboard visible</criterion>
+          </acceptance>
+        </task>
+      </tasks>
+    </sprint>
+
+    <!-- ============================== SPRINT 3 =============================== -->
+    <sprint id="S3" title="Chat Core & Queue" goal="Real-time messaging with Socket.IO + Redis, queue, persistence">
+      <deliverables>
+        <item>Socket.IO gateway with JWT auth</item>
+        <item>Redis adapter enabled</item>
+        <item>Conversation/Message models with persistence</item>
+        <item>Client & Agent chat UIs</item>
+      </deliverables>
+      <tasks>
+        <task id="T3.001" title="DB: conversations/messages">
+          <changes>
+            <file path="/database" name="schema.prisma_T3.001 (conversations, messages)"/>
+          </changes>
+          <acceptance>
+            <criterion>Relations set: Conversation hasMany Messages</criterion>
+          </acceptance>
+        </task>
+
+        <task id="T3.002" title="Socket Gateway + Redis Adapter + JWT">
+          <changes>
+            <file path="/backend/src/modules/chats" name="chat.gateway_T3.002.ts"/>
+            <file path="/backend/src/modules/chats" name="chat.service_T3.002.ts"/>
+          </changes>
+          <acceptance>
+            <criterion>Authenticated sockets join room per conversationId</criterion>
+            <criterion>Redis adapter configured</criterion>
+          </acceptance>
+        </task>
+
+        <task id="T3.003" title="Message Handling & History API">
+          <changes>
+            <file path="/backend/src/modules/chats" name="messages.controller_T3.003.ts"/>
+          </changes>
+          <acceptance>
+            <criterion>Message persisted BEFORE emit</criterion>
+            <criterion>History endpoint returns ordered messages</criterion>
+          </acceptance>
+        </task>
+
+        <task id="T3.004" title="Frontend Chat (Client/Agent)">
+          <changes>
+            <file path="/frontend/src/pages" name="chat_T3.004.tsx (client)"/>
+            <file path="/frontend/src/pages" name="agent/chat_T3.004.tsx"/>
+            <file path="/frontend/src/components" name="MessageList_T3.004.tsx"/>
+            <file path="/frontend/src/components" name="ChatInput_T3.004.tsx"/>
+          </changes>
+          <acceptance>
+            <criterion>Two-browser test: messages appear in real-time</criterion>
+          </acceptance>
+        </task>
+
+        <task id="T3.005" title="Playwright E2E: real-time chat">
+          <acceptance>
+            <criterion>E2E spins two contexts: client and agent exchange messages</criterion>
+          </acceptance>
+        </task>
+      </tasks>
+    </sprint>
+
+    <!-- ============================== SPRINT 4 =============================== -->
+    <sprint id="S4" title="Agent Workflows & Manager Dashboard" goal="Assignment, tickets, metrics">
+      <deliverables>
+        <item>FIFO assignment endpoint</item>
+        <item>Tickets module</item>
+        <item>Manager dashboard with charts</item>
+      </deliverables>
+      <tasks>
+        <task id="T4.001" title="Assignment API (FIFO)">
+          <changes>
+            <file path="/backend/src/modules/chats" name="assign.controller_T4.001.ts"/>
+          </changes>
+          <acceptance>
+            <criterion>/agents/next assigns pending conversation atomically</criterion>
+            <criterion>Uses transactions/locks to avoid double-assign</criterion>
+          </acceptance>
+        </task>
+
+        <task id="T4.002" title="Tickets Module">
+          <changes>
+            <file path="/database" name="schema.prisma_T4.002 (tickets)"/>
+            <file path="/backend/src/modules/tickets" name="tickets.controller_T4.002.ts"/>
+          </changes>
+          <acceptance>
+            <criterion>Convert conversation to ticket</criterion>
+            <criterion>CRUD works with RBAC</criterion>
+          </acceptance>
+        </task>
+
+        <task id="T4.003" title="Manager Dashboard UI">
+          <changes>
+            <file path="/frontend/src/pages" name="manager_T4.003.tsx"/>
+            <file path="/frontend/src/components" name="Charts_T4.003.tsx"/>
+          </changes>
+          <acceptance>
+            <criterion>Charts for chats/day and avg response time</criterion>
+          </acceptance>
+        </task>
+
+        <task id="T4.004" title="Tests: assignment, tickets, dashboard">
+          <acceptance>
+            <criterion>Unit tests for FIFO and ticket creation</criterion>
+            <criterion>E2E: manager views metrics</criterion>
+          </acceptance>
+        </task>
+      </tasks>
+    </sprint>
+
+    <!-- ============================== SPRINT 5 =============================== -->
+    <sprint id="S5" title="History, Exports & LGPD" goal="Export data PDF/CSV, history pages, forget-my-data">
+      <deliverables>
+        <item>History pages by role</item>
+        <item>Export endpoints (PDF/CSV)</item>
+        <item>Forget-my-data endpoint with audit log</item>
+      </deliverables>
+      <tasks>
+        <task id="T5.001" title="History Endpoints + UI">
+          <changes>
+            <file path="/backend/src/modules/exports" name="history.controller_T5.001.ts"/>
+            <file path="/frontend/src/pages" name="history_T5.001.tsx"/>
+          </changes>
+          <acceptance>
+            <criterion>Role-scoped history lists (client, operator, admin, master admin)</criterion>
+          </acceptance>
+        </task>
+
+        <task id="T5.002" title="Export PDF/CSV">
+          <changes>
+            <file path="/backend/src/modules/exports" name="export.controller_T5.002.ts"/>
+          </changes>
+          <acceptance>
+            <criterion>PDF/CSV generated via streams; authorized users only</criterion>
+            <criterion>Audit log entry on export</criterion>
+          </acceptance>
+        </task>
+
+        <task id="T5.003" title="Forget My Data">
+          <changes>
+            <file path="/backend/src/modules/lgpd" name="forget.controller_T5.003.ts"/>
+            <file path="/backend/src/modules/audit" name="audit.service_T5.003.ts"/>
+          </changes>
+          <acceptance>
+            <criterion>PII anonymized/deleted; audit log recorded</criterion>
+            <criterion>User cannot login after forget</criterion>
+          </acceptance>
+        </task>
+
+        <task id="T5.004" title="Tests: exports & forget">
+          <acceptance>
+            <criterion>Unit tests for export generation and forget flow</criterion>
+            <criterion>E2E: user exports data, then forgets account</criterion>
+          </acceptance>
+        </task>
+      </tasks>
+    </sprint>
+
+    <!-- ============================== SPRINT 6 =============================== -->
+    <sprint id="S6" title="Security Hardening & CI/CD Prod" goal="TLS, refresh flows, SAST, dependency scanning">
+      <deliverables>
+        <item>NGINX with TLS and security headers</item>
+        <item>Refresh token rotation; logout/blacklist or short-lived tokens</item>
+        <item>CI: SAST + dependency scan gates</item>
+      </deliverables>
+      <tasks>
+        <task id="T6.001" title="TLS & NGINX Hardening">
+          <changes>
+            <file path="/ops" name="nginx.conf_T6.001 (HSTS, CSP, redirects)"/>
+          </changes>
+          <acceptance>
+            <criterion>HTTPS enforced; no mixed-content warnings</criterion>
+          </acceptance>
+        </task>
+
+        <task id="T6.002" title="Refresh Tokens & Logout">
+          <changes>
+            <file path="/backend/src/modules/auth" name="refresh.controller_T6.002.ts"/>
+          </changes>
+          <acceptance>
+            <criterion>Refresh rotation implemented; stolen refresh invalidated</criterion>
+          </acceptance>
+        </task>
+
+        <task id="T6.003" title="CI Security Gates">
+          <changes>
+            <file path="/ops/github/workflows" name="security.yml_T6.003"/>
+          </changes>
+          <acceptance>
+            <criterion>Build fails on critical vulnerabilities</criterion>
+          </acceptance>
+        </task>
+      </tasks>
+    </sprint>
+
+    <!-- ============================== SPRINT 7 =============================== -->
+    <sprint id="S7" title="Admin & Multi-Tenancy Enhancements" goal="Company-level settings, advanced roles, supervision tools">
+      <deliverables>
+        <item>Company settings page</item>
+        <item>Advanced RBAC (scopes per company)</item>
+        <item>Supervisor live view/intervene</item>
+      </deliverables>
+      <tasks>
+        <task id="T7.001" title="Company Settings">
+          <changes>
+            <file path="/backend/src/modules/companies" name="settings.controller_T7.001.ts"/>
+            <file path="/frontend/src/pages" name="admin/settings_T7.001.tsx"/>
+          </changes>
+          <acceptance>
+            <criterion>Admin updates company retention/branding</criterion>
+          </acceptance>
+        </task>
+
+        <task id="T7.002" title="Advanced RBAC Scopes">
+          <changes>
+            <file path="/backend/src/guards" name="scoped-roles.guard_T7.002.ts"/>
+          </changes>
+          <acceptance>
+            <criterion>Actions are scoped by companyId; cross-tenant blocked</criterion>
+          </acceptance>
+        </task>
+
+        <task id="T7.003" title="Supervisor Intervene">
+          <changes>
+            <file path="/backend/src/modules/chats" name="supervise.controller_T7.003.ts"/>
+            <file path="/frontend/src/pages" name="manager/live_T7.003.tsx"/>
+          </changes>
+          <acceptance>
+            <criterion>Supervisor can view/attach to active chat as observer or participant</criterion>
+          </acceptance>
+        </task>
+      </tasks>
+    </sprint>
+
+    <!-- ============================== SPRINT 8 =============================== -->
+    <sprint id="S8" title="Performance & Scalability" goal="Load tests, caching, optimizations">
+      <deliverables>
+        <item>Redis caching for metrics</item>
+        <item>Load test report (100–200 concurrent users)</item>
+        <item>Optimized DB queries and indexes</item>
+      </deliverables>
+      <tasks>
+        <task id="T8.001" title="Caching Metrics">
+          <changes>
+            <file path="/backend/src/modules/metrics" name="metrics.cache_T8.001.ts"/>
+          </changes>
+          <acceptance>
+            <criterion>Metrics endpoints use Redis cache with TTL</criterion>
+          </acceptance>
+        </task>
+
+        <task id="T8.002" title="Load Testing">
+          <changes>
+            <file path="/ops/tests" name="k6-script_T8.002.js or artillery_T8.002.yml"/>
+          </changes>
+          <acceptance>
+            <criterion>Report attached in tasks/T8.002/EVIDENCE.md with response times and errors</criterion>
+          </acceptance>
+        </task>
+
+        <task id="T8.003" title="DB Optimization">
+          <changes>
+            <file path="/database/migrations" name="indexes_T8.003.sql"/>
+          </changes>
+          <acceptance>
+            <criterion>Slow queries improved; before/after metrics recorded</criterion>
+          </acceptance>
+        </task>
+      </tasks>
+    </sprint>
+
+    <!-- ============================== SPRINT 9 =============================== -->
+    <sprint id="S9" title="On-Premise Deploy & Documentation" goal="Install/operate manual, backup/restore, monitoring">
+      <deliverables>
+        <item>Install & Operation Guide (on-premise)</item>
+        <item>Backup/restore scripts (MariaDB + volumes)</item>
+        <item>Prometheus/Grafana (optional)</item>
+      </deliverables>
+      <tasks>
+        <task id="T9.001" title="Install & Operation Manual">
+          <changes>
+            <file path="/" name="INSTALL_ON_PREM_T9.001.md"/>
+            <file path="/" name="OPERATIONS_T9.001.md"/>
+          </changes>
+          <acceptance>
+            <criterion>Fresh server can run docker compose and serve app behind NGINX</criterion>
+          </acceptance>
+        </task>
+
+        <task id="T9.002" title="Backup/Restore Scripts">
+          <changes>
+            <file path="/ops" name="backup_T9.002.sh"/>
+            <file path="/ops" name="restore_T9.002.sh"/>
+          </changes>
+          <acceptance>
+            <criterion>Scheduled backup works; restore validated on clean environment</criterion>
+          </acceptance>
+        </task>
+
+        <task id="T9.003" title="Monitoring (Optional)">
+          <changes>
+            <file path="/ops" name="prometheus.yml_T9.003"/>
+            <file path="/ops" name="grafana-provisioning_T9.003/"/>
+          </changes>
+          <acceptance>
+            <criterion>Basic dashboards for CPU, memory, request rate</criterion>
+          </acceptance>
+        </task>
+      </tasks>
+    </sprint>
+
+  </sprints>
+
+  <!-- =============================== VALIDATION ============================== -->
+  <validation>
+    <quality-gates>
+      <gate>ESLint and Prettier pass</gate>
+      <gate>Unit coverage backend >= 70%</gate>
+      <gate>Playwright E2E for critical flows pass</gate>
+      <gate>No critical vulnerabilities in CI</gate>
+      <gate>LGPD audit logs present for export/delete</gate>
+    </quality-gates>
+    <task-checklist>
+      <item>Create /tasks/T{S}.{NNN}/</item>
+      <item>Suffix filenames with task id</item>
+      <item>Run lint, unit, build</item>
+      <item>Run E2E when provided</item>
+      <item>Update README Sprint Log</item>
+      <item>Commit/PR naming conventions respected</item>
+    </task-checklist>
+  </validation>
+
+</project-manual>
