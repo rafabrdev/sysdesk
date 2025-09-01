@@ -3,7 +3,7 @@
 
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty } from 'class-validator';
-import { Role } from '../../../generated/prisma';
+import { Role } from '../../../../generated/prisma';
 
 export class UserResponseDto {
   @ApiProperty()

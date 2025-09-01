@@ -30,7 +30,7 @@ async function main() {
   });
 
   // Create master admin user
-  const masterAdmin = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: 'admin@brsistemas.com.br' },
     update: {
       password: hashedPassword,
@@ -66,7 +66,7 @@ async function main() {
   // Create test users
   const testPassword = await bcrypt.hash('Test@2025', 12);
 
-  const testAdmin = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: 'admin@testcompany.com.br' },
     update: {
       password: testPassword,
@@ -82,7 +82,7 @@ async function main() {
     },
   });
 
-  const testOperator = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: 'operator@testcompany.com.br' },
     update: {
       password: testPassword,
@@ -98,7 +98,7 @@ async function main() {
     },
   });
 
-  const testClient = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: 'client@testcompany.com.br' },
     update: {
       password: testPassword,

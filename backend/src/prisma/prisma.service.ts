@@ -26,12 +26,11 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       throw new Error('cleanDatabase() is not allowed in production');
     }
 
-    const models = Object.keys(this).filter(
-      (key) => key[0] !== '_' && key[0] === key[0].toLowerCase() && key !== 'cleanDatabase',
-    );
-
-    for (const model of models) {
-      await this[model].deleteMany();
-    }
+    // Delete in order to respect foreign key constraints
+    await this.session.deleteMany();
+    await this.auditLog.deleteMany();
+    await this.invite.deleteMany();
+    await this.user.deleteMany();
+    await this.company.deleteMany();
   }
 }

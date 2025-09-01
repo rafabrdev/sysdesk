@@ -48,7 +48,7 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Token refreshed', type: AuthResponseDto })
   @ApiResponse({ status: 401, description: 'Invalid refresh token' })
   @ApiBearerAuth()
-  async refresh(@Request() req): Promise<AuthResponseDto> {
+  async refresh(@Request() req: any): Promise<AuthResponseDto> {
     return this.authService.refresh(req.user.id, req.user.refreshToken);
   }
 
@@ -60,7 +60,7 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiBearerAuth()
   async logout(
-    @Request() req,
+    @Request() req: any,
     @Body() body?: RefreshTokenDto,
   ): Promise<void> {
     await this.authService.logout(req.user.id, body?.refreshToken);
@@ -72,7 +72,7 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'User info' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiBearerAuth()
-  async me(@Request() req) {
+  async me(@Request() req: any) {
     return {
       id: req.user.id,
       email: req.user.email,
@@ -89,7 +89,7 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Token is valid' })
   @ApiResponse({ status: 401, description: 'Invalid token' })
   @ApiBearerAuth()
-  async validate(@Request() req) {
+  async validate(@Request() req: any) {
     return { valid: true, userId: req.user.id };
   }
 }

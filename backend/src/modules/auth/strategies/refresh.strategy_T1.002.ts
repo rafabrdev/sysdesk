@@ -11,7 +11,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 @Injectable()
 export class RefreshStrategy extends PassportStrategy(Strategy, 'refresh') {
   constructor(
-    private configService: ConfigService,
+    configService: ConfigService,
     private prisma: PrismaService,
   ) {
     super({

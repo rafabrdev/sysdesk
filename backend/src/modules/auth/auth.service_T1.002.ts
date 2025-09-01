@@ -1,15 +1,14 @@
 // auth.service_T1.002.ts
 // Authentication Service - Sprint 1 Task T1.002
 
-import { Injectable, UnauthorizedException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma/prisma.service';
 import { LoginDto } from './dto/login.dto_T1.002';
 import { AuthResponseDto, UserResponseDto } from './dto/auth-response.dto_T1.002';
-import { User, AuditAction } from '../../generated/prisma';
-import { randomBytes } from 'crypto';
+import { User, AuditAction } from '../../../generated/prisma';
 
 @Injectable()
 export class AuthService {
@@ -137,8 +136,8 @@ export class AuthService {
     await this.createSession(
       session.user.id,
       tokens.refreshToken,
-      session.ipAddress,
-      session.userAgent,
+      session.ipAddress || undefined,
+      session.userAgent || undefined,
     );
 
     return {
@@ -186,8 +185,8 @@ export class AuthService {
       userId,
       null,
       { allSessions: !refreshToken },
-      null,
-      null,
+      undefined,
+      undefined,
     );
   }
 
