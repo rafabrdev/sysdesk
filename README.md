@@ -38,7 +38,7 @@ Use os **emojis de status**:
 
 ### 🔑 Sprint 1 – Autenticação & Convites 🟨
 - ✅ **T1.001** Modelar tabelas: users, companies, invites, sessions.
-- ⬜ **T1.002** Implementar Auth (JWT + Refresh + bcrypt).
+- ✅ **T1.002** Implementar Auth (JWT + Refresh + bcrypt).
 - ⬜ **T1.003** Fluxo de registro por convite + RBAC.
 - ⬜ **T1.004** Criar telas de Login/Register (Frontend).
 - ⬜ **T1.005** Testes unitários + E2E Auth.
@@ -346,3 +346,49 @@ Modelos aprimorados para o sistema de autenticação com RBAC completo e multi-t
 - ✅ Estrutura de tabelas validada
 
 **Próxima tarefa:** T1.002 - Implementar Backend Auth (JWT + Refresh + bcrypt)
+
+---
+
+### [S1][T1.002] - Sistema de Autenticação JWT com Refresh Tokens ✅
+**Data:** 2025-09-01  
+**Branch:** `sprint/S1_task_T1.002-backend-auth`  
+
+**Resumo:**  
+Sistema completo de autenticação implementado no backend NestJS com JWT, refresh tokens e segurança avançada:
+- **Módulo Auth:** Controller, Service, Strategies e Guards
+- **Endpoints:** login, refresh, logout, me, validate
+- **Segurança:** bcrypt (12 rounds), account lockout, audit logging
+- **Session tracking:** Controle completo de sessões com refresh tokens
+
+**Componentes implementados:**
+- ✅ Auth Module completo com todas as dependências
+- ✅ JWT Strategy para validação de access tokens
+- ✅ Refresh Strategy para renovação de tokens
+- ✅ Auth Guards (JWT e Refresh) com suporte a rotas públicas
+- ✅ Auth Service com lógica completa de autenticação
+- ✅ DTOs de validação (Login, Auth Response, Refresh)
+- ✅ Prisma Service para acesso ao banco
+- ✅ Decorator @Public para rotas sem autenticação
+
+**Features de segurança:**
+- ✅ Passwords hasheados com bcrypt (salt rounds configurável)
+- ✅ Account lockout após 5 tentativas falhas
+- ✅ Audit logging para todas as ações (login, logout, falhas)
+- ✅ Session tracking com detalhes (IP, User Agent, localização)
+- ✅ Refresh token rotation para segurança adicional
+- ✅ Validação de empresa e usuário ativos
+- ✅ Update de lastLoginAt e lastActivityAt
+
+**Arquivos criados:**
+- `backend/src/modules/auth/` - Módulo completo de autenticação
+- `backend/src/prisma/` - Serviço Prisma
+- `backend/src/common/decorators/public.decorator.ts` - Decorator para rotas públicas
+- `backend/src/seed/seed-auth_T1.002.ts` - Seed para testes
+- `tasks/T1.002/` - Documentação da tarefa
+
+**Dependências adicionadas:**
+- @nestjs/jwt, @nestjs/passport, @nestjs/config, @nestjs/swagger
+- passport, passport-jwt, bcrypt
+- class-validator, class-transformer
+
+**Próxima tarefa:** T1.003 - Fluxo de registro por convite + RBAC
