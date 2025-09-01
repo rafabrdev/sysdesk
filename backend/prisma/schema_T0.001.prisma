@@ -1,0 +1,61 @@
+// schema_T0.001.prisma
+// Prisma schema file for Sysdesk - Sprint 0 Task T0.001
+// Initial database structure for multi-tenant support chat platform
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ====================
+// Base Tables (S0/S1)
+// ====================
+
+// Multi-tenant company structure
+model Company {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique // URL-friendly identifier
+  cnpj        String?  @unique // Brazilian company document (encrypted in production)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  users       User[]
+
+  @@map("companies")
+}
+
+// User accounts with RBAC
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  password    String   // bcrypt hashed
+  name        String
+  role        Role     @default(CLIENTE)
+  isActive    Boolean  @default(true)
+  companyId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  company     Company  @relation(fields: [companyId], references: [id])
+
+  @@index([companyId])
+  @@index([email])
+  @@map("users")
+}
+
+// User roles enumeration
+enum Role {
+  MASTER_ADMIN // System-wide admin (BR SISTEMAS)
+  ADMIN        // Company admin
+  OPERADOR     // Support operator/agent
+  CLIENTE      // End client
+}

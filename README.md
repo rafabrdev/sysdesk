@@ -36,8 +36,8 @@ Use os **emojis de status**:
 
 ---
 
-### 🔑 Sprint 1 – Autenticação & Convites
-- ⬜ **T1.001** Modelar tabelas: users, companies, invites.
+### 🔑 Sprint 1 – Autenticação & Convites 🟨
+- ✅ **T1.001** Modelar tabelas: users, companies, invites, sessions.
 - ⬜ **T1.002** Implementar Auth (JWT + Refresh + bcrypt).
 - ⬜ **T1.003** Fluxo de registro por convite + RBAC.
 - ⬜ **T1.004** Criar telas de Login/Register (Frontend).
@@ -308,3 +308,41 @@ http://localhost/api  # Backend via NGINX
 ```
 
 **Próxima Sprint:** Sprint 1 - Autenticação & Convites
+
+---
+
+### [S1][T1.001] - Modelagem de tabelas Prisma para sistema de autenticação ✅
+**Data:** 2025-09-01  
+**Branch:** `sprint/S1_task_T1.001-prisma-models`  
+
+**Resumo:**  
+Modelos aprimorados para o sistema de autenticação com RBAC completo e multi-tenancy:
+- **Modelos principais:** Company, User, Invite, Session, AuditLog
+- **Enums adicionados:** Role, Plan, AuditAction, RiskLevel
+- **Placeholders futuros:** Conversation, Message, Ticket (para Sprints 3-4)
+- **Migration aplicada:** 20250901182215_add_auth_models_t1_001
+
+**Melhorias implementadas:**
+- ✅ Sistema de planos (TRIAL, BASIC, PROFESSIONAL, ENTERPRISE)
+- ✅ Audit logging com type safety via enum AuditAction
+- ✅ Risk assessment para auditoria (LOW, MEDIUM, HIGH, CRITICAL)
+- ✅ Campos de segurança aprimorados (failedLoginAttempts, lockedUntil)
+- ✅ Session tracking detalhado (device, browser, OS, location)
+- ✅ Convites multi-uso suportados (maxUses, uses)
+- ✅ Soft delete para LGPD compliance
+- ✅ Índices otimizados para performance
+
+**Arquivos criados/atualizados:**
+- `database/prisma/schema_T1.001.prisma` - Schema completo atualizado
+- `backend/prisma/schema.prisma` - Schema de produção
+- `backend/prisma/migrations/20250901182215_add_auth_models_t1_001/` - Migration SQL
+- `backend/generated/prisma/` - Cliente Prisma gerado
+- `tasks/T1.001/` - Documentação da tarefa
+
+**Validação:**
+- ✅ Migration aplicada com sucesso no MariaDB
+- ✅ Prisma Client gerado sem erros
+- ✅ Permissões de banco configuradas para shadow database
+- ✅ Estrutura de tabelas validada
+
+**Próxima tarefa:** T1.002 - Implementar Backend Auth (JWT + Refresh + bcrypt)

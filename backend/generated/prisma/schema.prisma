@@ -1,0 +1,319 @@
+// schema_T1.001.prisma
+// Prisma schema file for Sysdesk - Sprint 1 Task T1.001
+// Enhanced auth models with complete RBAC and multi-tenant support
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ====================
+// Auth & Base Tables (S1)
+// ====================
+
+// Multi-tenant company structure
+model Company {
+  id        String    @id @default(uuid())
+  name      String
+  slug      String    @unique // URL-friendly identifier
+  cnpj      String?   @unique // Brazilian company document (encrypted in production)
+  phone     String?
+  email     String?
+  website   String?
+  address   String?   @db.Text
+  logo      String? // URL to company logo
+  plan      Plan      @default(BASIC) // Subscription plan
+  maxUsers  Int       @default(10) // User limit based on plan
+  maxAgents Int       @default(3) // Agent limit based on plan
+  isActive  Boolean   @default(true)
+  settings  Json? // Company-specific settings
+  metadata  Json? // Additional flexible data
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // Soft delete for LGPD
+
+  // Relations
+  users         User[]
+  invites       Invite[]
+  auditLogs     AuditLog[]
+  conversations Conversation[] // Future: S3
+  tickets       Ticket[] // Future: S4
+
+  @@index([slug])
+  @@index([isActive])
+  @@index([plan])
+  @@map("companies")
+}
+
+// User accounts with enhanced RBAC
+model User {
+  id                  String    @id @default(uuid())
+  email               String    @unique
+  password            String // bcrypt hashed
+  name                String
+  phone               String?
+  avatar              String?
+  role                Role      @default(CLIENT)
+  department          String? // For internal organization
+  position            String? // Job title
+  isActive            Boolean   @default(true)
+  isEmailVerified     Boolean   @default(false)
+  isOnline            Boolean   @default(false) // For agent availability
+  lastLoginAt         DateTime?
+  lastActivityAt      DateTime?
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime? // Account lockout after failed attempts
+  companyId           String
+  preferences         Json? // User preferences (theme, language, etc)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  deletedAt           DateTime? // Soft delete for LGPD
+
+  // Relations
+  company     Company    @relation(fields: [companyId], references: [id])
+  sessions    Session[]
+  invitesSent Invite[]   @relation("InviteSender")
+  invitesUsed Invite?    @relation("InviteUser")
+  auditLogs   AuditLog[]
+
+  // Future relations (S3-S5)
+  conversationsAsAgent  Conversation[] @relation("AgentConversations")
+  conversationsAsClient Conversation[] @relation("ClientConversations")
+  messagesSent          Message[]
+
+  @@index([companyId])
+  @@index([email])
+  @@index([role])
+  @@index([isActive])
+  @@index([isOnline])
+  @@map("users")
+}
+
+// Enhanced invite tokens for registration
+model Invite {
+  id          String    @id @default(uuid())
+  token       String    @unique @default(cuid())
+  email       String
+  name        String? // Pre-filled name for the invitee
+  role        Role      @default(CLIENT)
+  department  String? // Pre-assigned department
+  message     String?   @db.Text // Custom message for invitee
+  companyId   String
+  invitedById String
+  usedById    String?   @unique
+  maxUses     Int       @default(1) // Allow multi-use invites
+  uses        Int       @default(0) // Track usage count
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  company   Company @relation(fields: [companyId], references: [id])
+  invitedBy User    @relation("InviteSender", fields: [invitedById], references: [id])
+  usedBy    User?   @relation("InviteUser", fields: [usedById], references: [id])
+
+  @@index([token])
+  @@index([email])
+  @@index([companyId])
+  @@index([expiresAt])
+  @@index([role])
+  @@map("invites")
+}
+
+// Enhanced session management for JWT refresh tokens
+model Session {
+  id            String    @id @default(uuid())
+  userId        String
+  refreshToken  String    @db.Text
+  accessToken   String?   @db.Text // Optional: store last access token
+  userAgent     String?   @db.Text
+  ipAddress     String?
+  location      String? // Geo-location based on IP
+  device        String? // Device type (mobile, desktop, tablet)
+  browser       String? // Browser name
+  os            String? // Operating system
+  isValid       Boolean   @default(true)
+  revokedAt     DateTime? // When session was revoked
+  revokedReason String? // Why session was revoked
+  expiresAt     DateTime
+  lastUsedAt    DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([refreshToken(length: 255)])
+  @@index([expiresAt])
+  @@index([isValid])
+  @@map("sessions")
+}
+
+// Enhanced audit logs for LGPD compliance
+model AuditLog {
+  id         String      @id @default(uuid())
+  action     AuditAction // Enum for better type safety
+  entityType String // User, Company, Conversation, etc.
+  entityId   String?
+  oldData    Json? // Previous state (for updates)
+  newData    Json? // New state (for updates/creates)
+  userId     String?
+  companyId  String?
+  metadata   Json? // Additional context
+  ipAddress  String?
+  userAgent  String?     @db.Text
+  sessionId  String? // Link to session for traceability
+  risk       RiskLevel   @default(LOW) // Risk assessment
+  createdAt  DateTime    @default(now())
+
+  // Relations
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  @@index([action])
+  @@index([entityType])
+  @@index([userId])
+  @@index([companyId])
+  @@index([createdAt])
+  @@index([risk])
+  @@map("audit_logs")
+}
+
+// ====================
+// Future Tables (S3-S5) - Placeholders
+// ====================
+
+// Conversation model placeholder (S3)
+model Conversation {
+  id        String             @id @default(uuid())
+  companyId String
+  clientId  String
+  agentId   String?
+  status    ConversationStatus @default(WAITING)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  company  Company   @relation(fields: [companyId], references: [id])
+  client   User      @relation("ClientConversations", fields: [clientId], references: [id])
+  agent    User?     @relation("AgentConversations", fields: [agentId], references: [id])
+  messages Message[]
+
+  @@map("conversations")
+}
+
+// Message model placeholder (S3)
+model Message {
+  id             String   @id @default(uuid())
+  conversationId String
+  senderId       String
+  content        String   @db.Text
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+  sender       User         @relation(fields: [senderId], references: [id])
+
+  @@map("messages")
+}
+
+// Ticket model placeholder (S4)
+model Ticket {
+  id        String       @id @default(uuid())
+  companyId String
+  subject   String
+  status    TicketStatus @default(OPEN)
+  createdAt DateTime     @default(now())
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@map("tickets")
+}
+
+// ====================
+// Enums
+// ====================
+
+// User roles enumeration
+enum Role {
+  MASTER_ADMIN // System-wide admin (BR SISTEMAS)
+  ADMIN // Company admin
+  OPERATOR // Support operator/agent
+  CLIENT // End client
+}
+
+// Company subscription plans
+enum Plan {
+  TRIAL // 14-day trial
+  BASIC // Up to 10 users, 3 agents
+  PROFESSIONAL // Up to 50 users, 10 agents
+  ENTERPRISE // Unlimited users and agents
+  CUSTOM // Custom plan
+}
+
+// Audit action types
+enum AuditAction {
+  // Auth actions
+  LOGIN
+  LOGOUT
+  LOGIN_FAILED
+  PASSWORD_RESET
+  PASSWORD_CHANGE
+
+  // CRUD actions
+  CREATE
+  READ
+  UPDATE
+  DELETE
+
+  // Data actions
+  EXPORT
+  IMPORT
+
+  // Privacy actions
+  VIEW_PII
+  DOWNLOAD_PII
+  DELETE_PII
+
+  // Admin actions
+  GRANT_PERMISSION
+  REVOKE_PERMISSION
+  INVITE_USER
+  DEACTIVATE_USER
+
+  // System actions
+  SYSTEM_CONFIG_CHANGE
+  BACKUP
+  RESTORE
+}
+
+// Risk levels for audit
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+// Conversation status (S3)
+enum ConversationStatus {
+  WAITING
+  IN_PROGRESS
+  ON_HOLD
+  RESOLVED
+  ABANDONED
+}
+
+// Ticket status (S4)
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_CUSTOMER
+  RESOLVED
+  CLOSED
+}
