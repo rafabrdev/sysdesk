@@ -392,3 +392,52 @@ Sistema completo de autenticação implementado no backend NestJS com JWT, refre
 - class-validator, class-transformer
 
 **Próxima tarefa:** T1.003 - Fluxo de registro por convite + RBAC
+
+---
+
+### [S1][T1.003] - Sistema de Registro por Convite e RBAC Guards ✅
+**Data:** 2025-09-01  
+**Branch:** `sprint/S1_task_T1.003-invite-registration-rbac`  
+
+**Resumo:**  
+Implementação completa do sistema de registro apenas por convite e guards de autorização baseados em papéis (RBAC):
+- **Módulos:** Users e Invites com serviços e controllers completos
+- **RBAC:** Guards e decorators para controle de acesso por papéis
+- **Segurança:** Validação de hierarquia de papéis, audit logging, transações
+
+**Componentes implementados:**
+- ✅ Roles Decorator com helpers (AdminOnly, OperatorOnly, MasterAdminOnly)
+- ✅ RolesGuard com validação de hierarquia de papéis
+- ✅ InvitesModule com CRUD completo de convites
+- ✅ UsersModule com registro por convite e gerenciamento
+- ✅ DTOs para registro, convite e validações
+- ✅ Transações Prisma para atomicidade
+
+**Features de segurança:**
+- ✅ Apenas tokens válidos permitem registro
+- ✅ Hierarquia de papéis (MASTER_ADMIN > ADMIN > OPERATOR > CLIENT)
+- ✅ Convites com expiração e limite de usos
+- ✅ Validação de papel do convidador >= convidado
+- ✅ Audit logging completo para todas operações
+- ✅ Invalidação de sessões ao desativar usuário
+
+**Endpoints criados:**
+- POST /api/auth/register-by-invite - Registro via convite (público)
+- POST /api/invites - Criar convite (ADMIN+)
+- GET /api/invites - Listar convites (ADMIN+)
+- GET /api/invites/validate?token=xxx - Validar token (público)
+- GET /api/invites/:token - Detalhes do convite (público)
+- DELETE /api/invites/:id - Cancelar convite (ADMIN+)
+- GET /api/users - Listar usuários (OPERATOR+)
+- GET /api/users/:id - Detalhes do usuário (OPERATOR+)
+- PATCH /api/users/:id - Atualizar usuário (ADMIN+)
+- DELETE /api/users/:id - Desativar usuário (ADMIN+)
+
+**Arquivos criados:**
+- `backend/src/common/decorators/roles.decorator_T1.003.ts`
+- `backend/src/common/guards/roles.guard_T1.003.ts`
+- `backend/src/modules/invites/` - Módulo completo de convites
+- `backend/src/modules/users/` - Módulo completo de usuários
+- `tasks/T1.003/` - Documentação da tarefa
+
+**Próxima tarefa:** T1.004 - Frontend Login e Registro
