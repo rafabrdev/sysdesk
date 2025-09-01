@@ -26,11 +26,11 @@ Use os **emojis de status**:
 
 ## 📜 Missões (Sprints)
 
-### 🛠 Sprint 0 – Arquitetura & Setup
+### 🛠 Sprint 0 – Arquitetura & Setup ✅
 - ✅ **T0.001** Criar monorepo base (Next.js + NestJS + Prisma).
 - ✅ **T0.002** Configurar Docker Compose (MariaDB, Redis, Backend, Frontend, NGINX).
 - ✅ **T0.003** Criar schema inicial no Prisma + Seed.
-- ⬜ **T0.004** Configurar CI/CD (lint, test, build).
+- ✅ **T0.004** Configurar CI/CD (lint, test, build).
 
 🎯 **Objetivo:** Ambiente rodando localmente com `docker compose up`, CI funcionando e seed criado.  
 
@@ -242,3 +242,69 @@ Schema completo do banco de dados criado com suporte para multi-tenancy, RBAC e 
 - Cliente: ana.costa@cliente.com.br / Sysdesk@2025
 
 **Próxima tarefa:** T0.004 - Configurar CI/CD
+
+---
+
+### [S0][T0.004] - CI/CD com GitHub Actions ✅
+**Data:** 2025-09-01  
+**Branch:** `sprint/S0_task_T0.004-github-actions`  
+
+**Resumo:**  
+Pipeline completo de CI/CD configurado com GitHub Actions, incluindo análise de segurança:
+- **CI Pipeline:** Lint, testes e build em matrix strategy
+- **Security Pipeline:** SAST, dependency audit, license check, container scan
+- **Automação:** Dependabot para atualização de dependências
+- **Templates:** PR template para padronização
+
+**Arquivos principais criados:**
+- `.github/workflows/ci.yml` - Pipeline principal de CI
+- `.github/workflows/security_T0.004.yml` - Pipeline de segurança
+- `.github/dependabot.yml` - Configuração do Dependabot
+- `.github/pull_request_template.md` - Template para PRs
+- `tasks/T0.004/cicd-docs.md` - Documentação completa do CI/CD
+
+**Features implementadas:**
+- ✅ Matrix build (Node 20.x e 22.x)
+- ✅ Cache de dependências pnpm
+- ✅ CodeQL SAST analysis
+- ✅ Trivy container scanning
+- ✅ License compliance check
+- ✅ Dependency audit automático
+- ✅ Job summaries e reports
+- ✅ Dependabot semanal para npm
+- ✅ PR template estruturado
+
+**Configurações necessárias no GitHub:**
+- Secrets: `DOCKER_REGISTRY_URL`, `DOCKER_USERNAME`, `DOCKER_PASSWORD`
+- Branch protection rules em `main`
+- Labels para Dependabot: dependencies, security, docker
+
+---
+
+## 🎉 Sprint 0 Concluída!
+
+**Status:** ✅ COMPLETA  
+**Duração:** 1 dia  
+**Tasks concluídas:** 4/4  
+
+**Conquistas desbloqueadas:**
+- 🏗️ **Arquiteto:** Estrutura monorepo configurada
+- 🐳 **Docker Master:** Infraestrutura containerizada
+- 🗄️ **Data Wizard:** Schema e seed prontos
+- 🤖 **DevOps Hero:** CI/CD automatizado
+
+**Ambiente pronto para desenvolvimento:**
+```bash
+# Iniciar todos os serviços
+pnpm docker:up
+
+# Rodar migrations e seed
+pnpm db:migrate
+pnpm db:seed
+
+# Acessar aplicação
+http://localhost  # Frontend via NGINX
+http://localhost/api  # Backend via NGINX
+```
+
+**Próxima Sprint:** Sprint 1 - Autenticação & Convites
