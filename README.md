@@ -28,7 +28,7 @@ Use os **emojis de status**:
 
 ### 🛠 Sprint 0 – Arquitetura & Setup
 - ✅ **T0.001** Criar monorepo base (Next.js + NestJS + Prisma).
-- ⬜ **T0.002** Configurar Docker Compose (MariaDB, Redis, Backend, Frontend, NGINX).
+- ✅ **T0.002** Configurar Docker Compose (MariaDB, Redis, Backend, Frontend, NGINX).
 - ⬜ **T0.003** Criar schema inicial no Prisma + Seed.
 - ⬜ **T0.004** Configurar CI/CD (lint, test, build).
 
@@ -176,3 +176,36 @@ Criada a estrutura base do monorepo com três workspaces principais:
 - ✅ ESLint e Prettier configurados globalmente
 
 **Próxima tarefa:** T0.002 - Configurar Docker Compose
+
+---
+
+### [S0][T0.002] - Docker Compose com MariaDB, Redis, NGINX ✅
+**Data:** 2025-09-01  
+**Branch:** `sprint/S0_task_T0.002-docker-compose`  
+
+**Resumo:**  
+Infraestrutura Docker completa configurada com todos os serviços necessários:
+- **MariaDB 11:** Banco de dados relacional com healthcheck
+- **Redis 7:** Cache e queue com persistência AOF
+- **NGINX:** Reverse proxy com rate limiting e headers de segurança
+- **Backend/Frontend:** Dockerfiles multi-stage otimizados
+- **Mailhog:** Servidor SMTP para testes em desenvolvimento
+
+**Arquivos principais criados:**
+- `docker-compose.yml` - Orquestração de todos os serviços
+- `docker-compose.override.yml` - Overrides para desenvolvimento
+- `ops/nginx/nginx.conf` - Configuração NGINX com proxy reverso
+- `backend/Dockerfile` e `frontend/Dockerfile` - Builds multi-stage
+- `.env` - Variáveis de ambiente para desenvolvimento
+
+**Features implementadas:**
+- ✅ Healthchecks em todos os serviços
+- ✅ Volumes persistentes para dados
+- ✅ Network isolada (172.28.0.0/16)
+- ✅ Rate limiting configurado
+- ✅ Headers de segurança HTTP
+- ✅ Usuários não-root em produção
+- ✅ Hot reload em desenvolvimento
+- ✅ Scripts npm para gerenciamento Docker
+
+**Próxima tarefa:** T0.003 - Criar schema inicial no Prisma + Seed
