@@ -2,11 +2,10 @@
   "name": "sysdesk-backend",
   "version": "1.0.0",
   "description": "SysDesk Backend API - Help Desk System with Real-time Chat",
-  "main": "src/server.js",
-  "type": "module",
+  "main": "src/app.js",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
     "test": "jest --watchAll",
     "test:ci": "jest --coverage",
     "migrate": "sequelize-cli db:migrate",
@@ -43,7 +42,9 @@
     "winston-daily-rotate-file": "^5.0.0",
     "joi": "^17.13.3",
     "dayjs": "^1.11.13",
-    "axios": "^1.7.7"
+    "axios": "^1.7.7",
+    "express-session": "^1.18.0",
+    "connect-session-sequelize": "^7.1.7"
   },
   "devDependencies": {
     "nodemon": "^3.1.9",
