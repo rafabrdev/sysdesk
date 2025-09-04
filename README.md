@@ -1,4 +1,8 @@
-# SysDesk v1.0
+# SysDesk - Sistema de Suporte com Chat em Tempo Real
+
+![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)
+![Docker](https://img.shields.io/badge/docker-ready-green.svg)
+![License](https://img.shields.io/badge/license-MIT-yellow.svg)
 
 🎫 Sistema de Help Desk / Tickets para gestão de atendimento com chat em tempo real.
 
