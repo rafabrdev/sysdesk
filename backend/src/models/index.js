@@ -2,6 +2,8 @@ const { sequelize } = require('../config/database');
 const Client = require('./Client');
 const User = require('./User');
 const Session = require('./Session');
+const Ticket = require('./Ticket');
+const Message = require('./Message');
 
 // Definir relacionamentos
 
@@ -33,6 +35,61 @@ Session.belongsTo(User, {
   as: 'revokedBy'
 });
 
+// Client -> Tickets (1:N)
+Client.hasMany(Ticket, {
+  foreignKey: 'client_id',
+  as: 'tickets'
+});
+
+Ticket.belongsTo(Client, {
+  foreignKey: 'client_id',
+  as: 'client'
+});
+
+// User -> Tickets Created (1:N)
+User.hasMany(Ticket, {
+  foreignKey: 'user_id',
+  as: 'ticketsCreated'
+});
+
+Ticket.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'creator'
+});
+
+// User -> Tickets Assigned (1:N)
+User.hasMany(Ticket, {
+  foreignKey: 'assigned_to',
+  as: 'ticketsAssigned'
+});
+
+Ticket.belongsTo(User, {
+  foreignKey: 'assigned_to',
+  as: 'assignee'
+});
+
+// Ticket -> Messages (1:N)
+Ticket.hasMany(Message, {
+  foreignKey: 'ticket_id',
+  as: 'messages'
+});
+
+Message.belongsTo(Ticket, {
+  foreignKey: 'ticket_id',
+  as: 'ticket'
+});
+
+// User -> Messages (1:N)
+User.hasMany(Message, {
+  foreignKey: 'user_id',
+  as: 'messages'
+});
+
+Message.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'sender'
+});
+
 // Sincronizar modelos com o banco
 const syncDatabase = async (force = false) => {
   try {
@@ -49,5 +106,7 @@ module.exports = {
   Client,
   User,
   Session,
+  Ticket,
+  Message,
   syncDatabase
 };

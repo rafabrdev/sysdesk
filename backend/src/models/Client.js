@@ -61,21 +61,15 @@ const Client = sequelize.define('Client', {
     type: DataTypes.BOOLEAN,
     defaultValue: true
   },
-  subscription_type: {
-    type: DataTypes.ENUM('free', 'basic', 'pro', 'enterprise'),
-    defaultValue: 'free'
+  erp_client_code: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    comment: 'Código do cliente no ERP principal'
   },
-  subscription_expires_at: {
-    type: DataTypes.DATE,
-    allowNull: true
-  },
-  max_users: {
-    type: DataTypes.INTEGER,
-    defaultValue: 5
-  },
-  max_tickets: {
-    type: DataTypes.INTEGER,
-    defaultValue: 100
+  support_priority: {
+    type: DataTypes.ENUM('normal', 'high', 'critical'),
+    defaultValue: 'normal',
+    comment: 'Prioridade de atendimento baseada no contrato ERP'
   },
   metadata: {
     type: DataTypes.JSON,
