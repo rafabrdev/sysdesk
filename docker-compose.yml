@@ -1,0 +1,133 @@
+version: '3.8'
+
+services:
+  # ===========================================
+  # MariaDB Database Service
+  # ===========================================
+  mariadb:
+    image: mariadb:11.2
+    container_name: sysdesk-mariadb
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      TZ: ${SYSTEM_TIMEZONE}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb-data:/var/lib/mysql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+    networks:
+      - sysdesk-network
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ===========================================
+  # Backend API Service (Node.js + Express)
+  # ===========================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: sysdesk-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      PORT: ${BACKEND_PORT}
+      DB_HOST: mariadb
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN}
+      BCRYPT_SALT_ROUNDS: ${BCRYPT_SALT_ROUNDS}
+      SOCKET_CORS_ORIGIN: ${SOCKET_CORS_ORIGIN}
+      SESSION_SECRET: ${SESSION_SECRET}
+      MAX_FILE_SIZE: ${MAX_FILE_SIZE}
+      UPLOAD_DIR: ${UPLOAD_DIR}
+      LOG_LEVEL: ${LOG_LEVEL}
+      TZ: ${SYSTEM_TIMEZONE}
+    ports:
+      - "${BACKEND_PORT}:${BACKEND_PORT}"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - uploads-data:/app/uploads
+      - logs-data:/app/logs
+    networks:
+      - sysdesk-network
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    command: npm run dev
+
+  # ===========================================
+  # Frontend Service (React + Vite)
+  # ===========================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: sysdesk-frontend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      VITE_API_URL: ${VITE_API_URL}
+      VITE_SOCKET_URL: ${VITE_API_URL}
+      TZ: ${SYSTEM_TIMEZONE}
+    ports:
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.vite
+    networks:
+      - sysdesk-network
+    depends_on:
+      - backend
+    command: npm run dev
+
+  # ===========================================
+  # Adminer (Database Management - Optional)
+  # ===========================================
+  adminer:
+    image: adminer:4.8.1
+    container_name: sysdesk-adminer
+    restart: unless-stopped
+    environment:
+      ADMINER_DEFAULT_SERVER: mariadb
+      ADMINER_DESIGN: pepa-linha-dark
+    ports:
+      - "8080:8080"
+    networks:
+      - sysdesk-network
+    depends_on:
+      - mariadb
+
+# ===========================================
+# Networks
+# ===========================================
+networks:
+  sysdesk-network:
+    driver: bridge
+    name: sysdesk-network
+
+# ===========================================
+# Volumes
+# ===========================================
+volumes:
+  mariadb-data:
+    name: sysdesk-mariadb-data
+  uploads-data:
+    name: sysdesk-uploads
+  logs-data:
+    name: sysdesk-logs
