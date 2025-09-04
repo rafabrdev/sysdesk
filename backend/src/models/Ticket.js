@@ -92,17 +92,7 @@ const Ticket = sequelize.define('Ticket', {
   metadata: {
     type: DataTypes.JSON,
     allowNull: true,
-    comment: 'Dados adicionais (navegador, SO, módulo do ERP, etc)'
-  },
-  is_from_erp: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-    comment: 'Se foi iniciado de dentro do ERP'
-  },
-  erp_module: {
-    type: DataTypes.STRING(50),
-    allowNull: true,
-    comment: 'Módulo do ERP relacionado'
+    comment: 'Dados adicionais (navegador, SO, etc)'
   }
 }, {
   tableName: 'tickets',

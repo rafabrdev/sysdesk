@@ -1,35 +1,52 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import { PrivateRoute } from './components/PrivateRoute';
+import { LoginPage } from './pages/auth/LoginPage';
+import { RegisterPage } from './pages/auth/RegisterPage';
+import { DashboardPage } from './pages/DashboardPage';
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <Router>
+      <AuthProvider>
+        <Routes>
+          {/* Rotas Públicas */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          
+          {/* Rotas Protegidas */}
+          <Route element={<PrivateRoute />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            
+            {/* Rotas para Support, Admin e Master */}
+            <Route element={<PrivateRoute allowedRoles={['support']} />}>
+              {/* Adicionar rotas específicas de support aqui */}
+            </Route>
+            
+            {/* Rotas apenas para Admin e Master */}
+            <Route element={<PrivateRoute allowedRoles={['admin']} />}>
+              {/* Adicionar rotas de administração aqui */}
+            </Route>
+            
+            {/* Rotas apenas para Master */}
+            <Route element={<PrivateRoute allowedRoles={['master']} />}>
+              {/* Adicionar rotas master aqui */}
+            </Route>
+          </Route>
+          
+          {/* Rota padrão - redireciona para login */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          
+          {/* Rota 404 */}
+          <Route path="*" element={
+            <div className="flex min-h-screen items-center justify-center">
+              <h1 className="text-2xl font-bold">404 - Página não encontrada</h1>
+            </div>
+          } />
+        </Routes>
+      </AuthProvider>
+    </Router>
+  );
 }
 
 export default App

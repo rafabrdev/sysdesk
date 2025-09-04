@@ -18,10 +18,7 @@ const Client = sequelize.define('Client', {
   cnpj: {
     type: DataTypes.STRING(18),
     unique: true,
-    allowNull: true,
-    validate: {
-      is: /^[0-9]{2}\.[0-9]{3}\.[0-9]{3}\/[0-9]{4}-[0-9]{2}$/
-    }
+    allowNull: true
   },
   email: {
     type: DataTypes.STRING(255),
@@ -61,16 +58,6 @@ const Client = sequelize.define('Client', {
     type: DataTypes.BOOLEAN,
     defaultValue: true
   },
-  erp_client_code: {
-    type: DataTypes.STRING(50),
-    allowNull: true,
-    comment: 'Código do cliente no ERP principal'
-  },
-  support_priority: {
-    type: DataTypes.ENUM('normal', 'high', 'critical'),
-    defaultValue: 'normal',
-    comment: 'Prioridade de atendimento baseada no contrato ERP'
-  },
   metadata: {
     type: DataTypes.JSON,
     allowNull: true
@@ -82,9 +69,6 @@ const Client = sequelize.define('Client', {
   indexes: [
     {
       fields: ['email']
-    },
-    {
-      fields: ['cnpj']
     },
     {
       fields: ['is_active']

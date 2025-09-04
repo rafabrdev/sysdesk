@@ -224,16 +224,35 @@ Desenvolver um sistema de suporte completo do zero usando:
 
 ## Resultado Final
 
-Sistema completo com:
-- Usuários clientes fazem login e iniciam chats (tickets)
-- Agentes de suporte respondem em tempo real
-- Upload/download de arquivos
-- Painel administrativo completo
-- Controle RBAC funcional
-- Interface moderna com shadcn/ui
-- Ambiente totalmente containerizado
-- Comunicação em tempo real via Socket.IO
-- Persistência confiável em MariaDB
+Sistema de chat de suporte completo com:
+- **Chat em tempo real** entre clientes do ERP e suporte da BR Sistemas
+- **Fila de atendimento** eficiente para agentes
+- **Histórico organizado** de conversas por empresa
+- **Upload de arquivos** para diagnóstico de problemas
+- **Painel administrativo** para supervisão
+- **Interface moderna** estilo WhatsApp/ChatGPT com shadcn/ui
+- **Ambiente containerizado** para fácil deployment
+
+## Prioridades de Desenvolvimento
+
+### 🔥 Alta Prioridade (Core do Sistema)
+1. **Chat em tempo real** (Socket.IO)
+2. **Autenticação e RBAC**
+3. **Interface de chat** limpa e funcional
+4. **Sistema de fila** para agentes
+5. **Notificações** de novas conversas
+
+### 📋 Média Prioridade
+1. **Upload de arquivos/screenshots**
+2. **Histórico de conversas**
+3. **Painel administrativo básico**
+4. **Busca em conversas**
+
+### 📊 Baixa Prioridade
+1. **Relatórios e métricas avançadas**
+2. **Exportação de conversas**
+3. **Integração futura com ERP**
+4. **Notificações por email**
 
 ## Tecnologias Principais
 
@@ -244,3 +263,7 @@ Sistema completo com:
 - **Autenticação**: JWT + RBAC
 - **Tempo Real**: Socket.IO
 - **Upload**: Multer + File Management
+
+---
+
+**Lembre-se**: O objetivo principal é **facilitar o suporte aos clientes do ERP** através de um chat eficiente e intuitivo. O sistema deve ser **simples de usar** tanto para clientes quanto para agentes de suporte.

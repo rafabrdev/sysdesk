@@ -90,6 +90,18 @@ Message.belongsTo(User, {
   as: 'sender'
 });
 
+// Testar conexão com o banco
+const testConnection = async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('✅ Database connection established successfully.');
+    return true;
+  } catch (error) {
+    console.error('❌ Unable to connect to the database:', error.message);
+    return false;
+  }
+};
+
 // Sincronizar modelos com o banco
 const syncDatabase = async (force = false) => {
   try {
@@ -108,5 +120,6 @@ module.exports = {
   Session,
   Ticket,
   Message,
+  testConnection,
   syncDatabase
 };
